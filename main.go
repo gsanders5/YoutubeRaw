@@ -23,16 +23,17 @@ func main() {
 	tmpDir = t
 	defer os.Remove(t)
 
-
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/v/", youtubeHandler)
+	http.HandleFunc("/v/", youtubeVideoHandler)
+	http.HandleFunc("/t/", youtubeThumbnailHandler)
+	http.HandleFunc("/e/", youtubeEmbedHandler)
 	fs := http.FileServer(http.Dir(tmpDir))
 	http.Handle("/s/", http.StripPrefix("/s/", fs))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func youtubeHandler(w http.ResponseWriter, r *http.Request) {
+func youtubeVideoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate the path has "arguments"
 	if r.URL.Path == "/v/" {
@@ -75,7 +76,47 @@ func youtubeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Remove any files created by youtube-dl after an interval of time has passed.
 	go func(videoFilePath string) {
-		time.Sleep(6 * time.Hour)
+		time.Sleep(3 * time.Hour)
 		os.Remove(videoFilePath)
 	}(videoFilePath)
+}
+
+func youtubeThumbnailHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Validate the path has "arguments"
+	if r.URL.Path == "/t/" {
+		youtubeErrorHandler(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Get the video ID
+	videoId := strings.TrimPrefix(r.URL.Path, "/t/")
+	thumbnailFileName := ("ytraw-" + videoId + ".jpg")
+	thumbnailFilePath := filepath.Join(tmpDir, thumbnailFileName)
+	thumbnailFileURL := "https://img.youtube.com/vi/"+ videoId +"/hqdefault.jpg"
+
+	// If the file exists, serve it without running youtube-dl again.
+	if _, err := os.Stat(thumbnailFilePath); !os.IsNotExist(err) {
+		fmt.Println("Redirecting, file existed.")
+		http.Redirect(w, r, "/s/"+thumbnailFileName, http.StatusSeeOther)
+		return
+	}
+
+	// ToDo: Validate existence of video.
+
+	fmt.Println("Grabbing Thumbnail.")
+
+	err := DownloadFile(thumbnailFilePath, thumbnailFileURL)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Redirecting, file did not exist but was created.")
+	http.Redirect(w, r, "/s/"+thumbnailFileName, http.StatusSeeOther)
+
+	// Remove any files created by youtube-dl after an interval of time has passed.
+	go func(videoFilePath string) {
+		time.Sleep(3 * time.Hour)
+		os.Remove(videoFilePath)
+	}(thumbnailFilePath)
 }
