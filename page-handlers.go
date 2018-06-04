@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,4 +40,12 @@ func youtubeErrorHandler(w http.ResponseWriter, r *http.Request, status int) {
 		w.Header().Set("Content-Length", fmt.Sprint(len(data)))
 		fmt.Fprint(w, string(data))
 	}
+}
+func youtubeEmbedHandler(w http.ResponseWriter, r *http.Request) {
+
+	videoId := strings.TrimPrefix(r.URL.Path, "/e/")
+	w.Header().Set("Content-Type", "text/html")
+	data := "<!DOCTYPE html><html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\"><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Rvnx Feed Internals</title></head><body><div id=\"container\"><video width=\"640\" height=\"480\" controls preload=\"none\"poster=\"/t/"+ videoId + "\"><source src=\"/v/"+ videoId + "\" type=\"video/mp4\">Your browser does not support HTML5 video. <a href=\"http://outdatedbrowser.com/\">Please switch to a modern browser.</a></video></div></body></html>"
+	w.Header().Set("Content-Length", fmt.Sprint(len(data)))
+	fmt.Fprint(w, string(data))
 }
