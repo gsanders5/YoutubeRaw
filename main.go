@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/BrianAllred/goydl"
+	"github.com/urfave/cli"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,11 +13,45 @@ import (
 	"time"
 )
 
+var version = "Unknown Version"
 var tmpDir = os.TempDir()
 
 func main() {
+	app := cli.NewApp()
+	app.Name = "ytraw"
+	app.Usage = "Serve YouTube videos as raw mp4 files on demand"
+	app.Version = version
 
-	t, err := ioutil.TempDir(os.TempDir(), "ytraw-")
+	var bindAddress string
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "bindAddress, b",
+			Value:       "127.0.0.1:8080",
+			Usage:       "Set the IP address and port to bind the server to",
+			Destination: &bindAddress,
+		},
+		cli.StringFlag{
+			Name:        "temporaryDirectory, d",
+			Value:       os.TempDir(),
+			Usage:       "Set a directory to store files in",
+			Destination: &tmpDir,
+		},
+	}
+
+	app.Action = func(c *cli.Context) error {
+		startServer(bindAddress)
+		return nil
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func startServer(bindAddress string) {
+	t, err := ioutil.TempDir(tmpDir, "ytraw-")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +65,7 @@ func main() {
 	fs := http.FileServer(http.Dir(tmpDir))
 	http.Handle("/s/", http.StripPrefix("/s/", fs))
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe((bindAddress), nil))
 }
 
 func youtubeVideoHandler(w http.ResponseWriter, r *http.Request) {
