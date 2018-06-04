@@ -6,4 +6,8 @@ A Golang based server to serve YouTube videos as raw mp4 files on demand. This w
 
 To build a release version, ensure the app version is changed to the current short git commit identifier.
 
-```go build -ldflags "-X main.version=$(git rev-parse --short HEAD)"  -o build/ytraw *.go```
+```
+git clone https://git.rvnx.org/graham/YoutubeRaw.git
+cd YoutubeRaw
+go build -ldflags "-X main.version=$(git rev-parse --short HEAD)"  -o build/ytraw *.go
+```
