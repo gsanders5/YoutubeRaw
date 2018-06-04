@@ -62,7 +62,7 @@ func startServer(bindAddress string) {
 	http.HandleFunc("/v/", youtubeVideoHandler)
 	http.HandleFunc("/t/", youtubeThumbnailHandler)
 	http.HandleFunc("/e/", youtubeEmbedHandler)
-	fs := http.FileServer(http.Dir(tmpDir))
+	fs := http.FileServer(reducedFileSystem{http.Dir(tmpDir)})
 	http.Handle("/s/", http.StripPrefix("/s/", fs))
 
 	log.Fatal(http.ListenAndServe((bindAddress), nil))
@@ -154,4 +154,26 @@ func youtubeThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(3 * time.Hour)
 		os.Remove(videoFilePath)
 	}(thumbnailFilePath)
+}
+
+// Create a filesystem which does not display indexes to prevent data leakage on /s/
+type reducedFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs reducedFileSystem) Open(path string) (http.File, error) {
+	f, err := nfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if s.IsDir() {
+		index := strings.TrimSuffix(path, "/") + "/index.html"
+		if _, err := nfs.fs.Open(index); err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
 }
