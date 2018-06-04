@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/BrianAllred/goydl"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
-	"github.com/BrianAllred/goydl"
-	"path/filepath"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -45,7 +45,7 @@ func youtubeVideoHandler(w http.ResponseWriter, r *http.Request) {
 	videoId := strings.TrimPrefix(r.URL.Path, "/v/")
 	videoFileName := ("ytraw-" + videoId + ".mp4")
 	videoFilePath := filepath.Join(tmpDir, videoFileName)
-	pidFilePath := filepath.Join(tmpDir, (videoFileName +".pid"))
+	pidFilePath := filepath.Join(tmpDir, (videoFileName + ".pid"))
 
 	// If the file exists, serve it without running youtube-dl again.
 	if _, err := os.Stat(videoFilePath); !os.IsNotExist(err) {
@@ -93,7 +93,7 @@ func youtubeThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	videoId := strings.TrimPrefix(r.URL.Path, "/t/")
 	thumbnailFileName := ("ytraw-" + videoId + ".jpg")
 	thumbnailFilePath := filepath.Join(tmpDir, thumbnailFileName)
-	thumbnailFileURL := "https://img.youtube.com/vi/"+ videoId +"/hqdefault.jpg"
+	thumbnailFileURL := "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg"
 
 	// If the file exists, serve it without running youtube-dl again.
 	if _, err := os.Stat(thumbnailFilePath); !os.IsNotExist(err) {

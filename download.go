@@ -1,9 +1,9 @@
 package main
 
 import (
-	"os"
-	"net/http"
 	"io"
+	"net/http"
+	"os"
 )
 
 // DownloadFile will download a url to a local file. It's efficient because it will
